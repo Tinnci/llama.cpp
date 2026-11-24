@@ -904,7 +904,8 @@ static bool htp_kparams_solve_matmul_impl(
     const bool   is_batched   = (ne02 * ne03 > 1 || ne12 * ne13 > 1);
     const size_t vtcm_budget  = htp_session_vtcm_size(sess);
 
-    const bool hmx_enabled = (htp_session_n_hmx(sess) > 0) && (opt_mm_select >= 2);
+    // HMX-tiled MUL_MAT_ID triggers dspqueue 0x00000072 on signed HTP v73 firmware; route MUL_MAT_ID to HVX unless opt_mm_select >= 3
+    const bool hmx_enabled = (htp_session_n_hmx(sess) > 0) && (opt_mm_select >= (is_matmul_id ? 3 : 2));
     if (hmx_enabled && htp_matmul_is_hmx_eligible(src0, src1, dst, is_matmul_id, is_batched)) {
         if (htp_kparams_solve_hmx_mm(sess, src0, src1, dst, wtype, ne00_padded, ne01_tiled, ne02, ne11, ne12, ne11_padded, is_matmul_id, is_batched, src2_size, vtcm_budget, kparams)) {
             goto finalize;
